@@ -1,4 +1,6 @@
-// Country code to flag emoji helper
+const DEFAULT_INTERVAL_MS = 60000;
+let refreshTimer = null;
+
 function getFlagEmoji(countryCode) {
   if (!countryCode || countryCode.length !== 2) return "🌐";
   const codePoints = countryCode
@@ -8,26 +10,19 @@ function getFlagEmoji(countryCode) {
   return String.fromCodePoint(...codePoints);
 }
 
-// Draw flag emoji to an offscreen canvas and return imageData
 function renderFlagToImageData(flagEmoji, size = 32) {
   const canvas = new OffscreenCanvas(size, size);
   const ctx = canvas.getContext("2d");
-
-  // Background
   ctx.clearRect(0, 0, size, size);
-
-  // Draw emoji
   ctx.font = `${size - 4}px serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(flagEmoji, size / 2, size / 2 + 1);
-
   return ctx.getImageData(0, 0, size, size);
 }
 
 async function updateFlag() {
   try {
-    // Use ipapi.co — free, no key needed
     const response = await fetch("http://ip-api.com/json/");
     const data = await response.json();
 
@@ -36,15 +31,14 @@ async function updateFlag() {
     const ip = data.query || "Unknown";
     const flag = getFlagEmoji(countryCode);
 
-    // Render flag emoji as icon
     const imageData = renderFlagToImageData(flag, 32);
     browser.browserAction.setIcon({ imageData: { 32: imageData } });
     browser.browserAction.setTitle({
       title: `${flag} ${countryName}\nIP: ${ip}`
     });
 
-    // Store for popup
-    browser.storage.local.set({ ip, countryCode, countryName, flag });
+    const { status, ...ipData } = data;
+    browser.storage.local.set({ ...ipData, flag });
 
   } catch (err) {
     console.error("IP Flag: failed to fetch IP info", err);
@@ -52,11 +46,24 @@ async function updateFlag() {
   }
 }
 
-// Run on startup and when browser wakes
-updateFlag();
-browser.runtime.onStartup.addListener(updateFlag);
+function startTimer(intervalMs) {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(updateFlag, intervalMs);
+}
 
-// Handle refresh from popup
+async function init() {
+  let { refreshInterval } = await browser.storage.local.get("refreshInterval");
+  if (!refreshInterval) {
+    refreshInterval = DEFAULT_INTERVAL_MS;
+    browser.storage.local.set({ refreshInterval });
+  }
+  updateFlag();
+  startTimer(refreshInterval);
+}
+
+init();
+
 browser.runtime.onMessage.addListener((msg) => {
   if (msg.action === "refresh") updateFlag();
+  if (msg.action === "setInterval") startTimer(msg.intervalMs);
 });
