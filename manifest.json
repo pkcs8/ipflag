@@ -11,7 +11,7 @@
   "browser_action": {
     "default_title": "IP Flag",
     "default_icon": {
-      "32": "icons/flag_placeholder.png"
+      "32": "icons/icon-32.png"
     },
     "default_popup": "popup.html"
   },
@@ -20,6 +20,7 @@
     "persistent": false
   },
   "icons": {
-    "48": "icons/flag_placeholder.png"
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png"
   }
 }
