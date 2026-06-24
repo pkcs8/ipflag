@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+  "name": "IP Flag",
+  "version": "1.0",
+  "description": "Shows the country flag of your current IP address in the toolbar.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "browser_action": {
+    "default_title": "IP Flag",
+    "default_icon": {
+      "32": "icons/flag_placeholder.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "icons": {
+    "48": "icons/flag_placeholder.png"
+  }
+}
