@@ -5,7 +5,8 @@
   "description": "Shows the country flag of your current IP address in the toolbar.",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "alarms"
   ],
   "browser_action": {
     "default_title": "IP Flag",
@@ -16,7 +17,7 @@
   },
   "background": {
     "scripts": ["background.js"],
-    "persistent": true
+    "persistent": false
   },
   "icons": {
     "48": "icons/flag_placeholder.png"

@@ -1,5 +1,4 @@
 const DEFAULT_INTERVAL_MS = 60000;
-let refreshTimer = null;
 
 function getFlagEmoji(countryCode) {
   if (!countryCode || countryCode.length !== 2) return "🌐";
@@ -33,9 +32,7 @@ async function updateFlag() {
 
     const imageData = renderFlagToImageData(flag, 32);
     browser.browserAction.setIcon({ imageData: { 32: imageData } });
-    browser.browserAction.setTitle({
-      title: `${flag} ${countryName}\nIP: ${ip}`
-    });
+    browser.browserAction.setTitle({ title: `${flag} ${countryName}\nIP: ${ip}` });
 
     const { status, ...ipData } = data;
     browser.storage.local.set({ ...ipData, flag });
@@ -46,24 +43,30 @@ async function updateFlag() {
   }
 }
 
-function startTimer(intervalMs) {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(updateFlag, intervalMs);
+function scheduleAlarm(intervalMs) {
+  browser.alarms.create("ipRefresh", { periodInMinutes: intervalMs / 60000 });
 }
 
-async function init() {
+// On install/update: set default interval if unset, fetch immediately, create alarm
+browser.runtime.onInstalled.addListener(async () => {
   let { refreshInterval } = await browser.storage.local.get("refreshInterval");
   if (!refreshInterval) {
     refreshInterval = DEFAULT_INTERVAL_MS;
     browser.storage.local.set({ refreshInterval });
   }
   updateFlag();
-  startTimer(refreshInterval);
-}
+  scheduleAlarm(refreshInterval);
+});
 
-init();
+// On browser startup: fetch immediately (alarm persists across restarts)
+browser.runtime.onStartup.addListener(updateFlag);
+
+// Periodic refresh via alarm
+browser.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "ipRefresh") updateFlag();
+});
 
 browser.runtime.onMessage.addListener((msg) => {
   if (msg.action === "refresh") updateFlag();
-  if (msg.action === "setInterval") startTimer(msg.intervalMs);
+  if (msg.action === "setInterval") scheduleAlarm(msg.intervalMs);
 });

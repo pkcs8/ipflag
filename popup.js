@@ -67,10 +67,10 @@ async function render() {
 }
 
 const INTERVAL_OPTIONS = [
-  { label: "10 seconds", value: 10000 },
   { label: "1 minute",   value: 60000 },
-  { label: "5 minutes",  value: 300000 },
+  { label: "10 minutes", value: 600000 },
   { label: "1 hour",     value: 3600000 },
+  { label: "1 day",      value: 86400000 },
 ];
 
 async function renderSettings() {
