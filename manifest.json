@@ -25,6 +25,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
+      "id": "ipflag@xrpscan.com",
       "data_collection_permissions": {
         "required": [],
         "optional": []

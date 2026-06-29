@@ -27,6 +27,17 @@ function applyTheme(theme) {
   document.body.classList.toggle("dark", theme === "dark");
 }
 
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function makeLoading(msg) {
+  return el("div", "loading", msg);
+}
+
 async function render() {
   const content = document.getElementById("content");
 
@@ -40,30 +51,33 @@ async function render() {
       data = { ...ipData, flag: getFlagEmoji(ipData.countryCode || "") };
       await browser.storage.local.set(data);
     } catch {
-      content.innerHTML = `<div class="loading">Failed to detect IP.<br>Check your connection.</div>`;
+      content.replaceChildren(makeLoading("Failed to detect IP. Check your connection."));
       return;
     }
   }
 
-  const rows = FIELDS
+  const rowsEl = el("div", "rows");
+  FIELDS
     .filter(f => data[f.key] !== undefined && data[f.key] !== null && data[f.key] !== "")
-    .map(f => `
-      <div class="row">
-        <span class="label">${f.label}</span>
-        <span class="value">${data[f.key]}</span>
-      </div>
-    `).join("");
+    .forEach(f => {
+      const row = el("div", "row");
+      row.append(el("span", "label", f.label), el("span", "value", String(data[f.key])));
+      rowsEl.appendChild(row);
+    });
 
-  content.innerHTML = `
-    <div class="flag">${data.flag || "🌐"}</div>
-    <div class="country">${data.country || "Unknown"}</div>
-    <div class="divider"></div>
-    <div class="rows">${rows}</div>
-    <button class="refresh-btn" id="refresh">↻ Refresh</button>
-  `;
+  const refreshBtn = el("button", "refresh-btn", "↻ Refresh");
+  refreshBtn.id = "refresh";
 
-  document.getElementById("refresh").addEventListener("click", async () => {
-    content.innerHTML = `<div class="loading">Refreshing…</div>`;
+  content.replaceChildren(
+    el("div", "flag", data.flag || "🌐"),
+    el("div", "country", data.country || "Unknown"),
+    el("div", "divider"),
+    rowsEl,
+    refreshBtn
+  );
+
+  refreshBtn.addEventListener("click", async () => {
+    content.replaceChildren(makeLoading("Refreshing…"));
     await browser.storage.local.clear();
     await browser.runtime.sendMessage({ action: "refresh" });
     await render();
@@ -82,46 +96,55 @@ async function renderSettings() {
   const { refreshInterval, theme } = await browser.storage.local.get(["refreshInterval", "theme"]);
   const isLight = (theme || "light") === "light";
 
-  section.innerHTML = `
-    <button class="settings-toggle" id="settings-toggle">
-      <span>Settings</span>
-      <span class="settings-arrow" id="settings-arrow">▶</span>
-    </button>
-    <div class="settings-panel" id="settings-panel">
-      <div class="settings-row">
-        <span class="settings-label">Refresh Interval</span>
-        <select class="settings-select" id="interval-select">
-          ${INTERVAL_OPTIONS.map(o =>
-            `<option value="${o.value}"${o.value === refreshInterval ? " selected" : ""}>${o.label}</option>`
-          ).join("")}
-        </select>
-      </div>
-      <div class="settings-row">
-        <span class="settings-label">Light Mode</span>
-        <label class="theme-switch">
-          <input type="checkbox" id="theme-toggle"${isLight ? " checked" : ""}>
-          <span class="theme-slider"></span>
-        </label>
-      </div>
-    </div>
-  `;
+  // Settings toggle button
+  const arrow = el("span", "settings-arrow", "▶");
+  arrow.id = "settings-arrow";
+  const toggleBtn = el("button", "settings-toggle");
+  toggleBtn.id = "settings-toggle";
+  toggleBtn.append(el("span", null, "Settings"), arrow);
 
-  const toggle = document.getElementById("settings-toggle");
-  const panel  = document.getElementById("settings-panel");
-  const arrow  = document.getElementById("settings-arrow");
+  // Refresh interval row
+  const select = document.createElement("select");
+  select.className = "settings-select";
+  select.id = "interval-select";
+  INTERVAL_OPTIONS.forEach(o => {
+    const opt = el("option", null, o.label);
+    opt.value = String(o.value);
+    if (o.value === refreshInterval) opt.selected = true;
+    select.appendChild(opt);
+  });
+  const intervalRow = el("div", "settings-row");
+  intervalRow.append(el("span", "settings-label", "Refresh Interval"), select);
 
-  toggle.addEventListener("click", () => {
+  // Theme toggle row
+  const themeInput = document.createElement("input");
+  themeInput.type = "checkbox";
+  themeInput.id = "theme-toggle";
+  themeInput.checked = isLight;
+  const themeSwitch = el("label", "theme-switch");
+  themeSwitch.append(themeInput, el("span", "theme-slider"));
+  const themeRow = el("div", "settings-row");
+  themeRow.append(el("span", "settings-label", "Light Mode"), themeSwitch);
+
+  // Settings panel
+  const panel = el("div", "settings-panel");
+  panel.id = "settings-panel";
+  panel.append(intervalRow, themeRow);
+
+  section.replaceChildren(toggleBtn, panel);
+
+  toggleBtn.addEventListener("click", () => {
     const open = panel.classList.toggle("open");
     arrow.textContent = open ? "▼" : "▶";
   });
 
-  document.getElementById("interval-select").addEventListener("change", async (e) => {
+  select.addEventListener("change", async (e) => {
     const intervalMs = parseInt(e.target.value, 10);
     await browser.storage.local.set({ refreshInterval: intervalMs });
     browser.runtime.sendMessage({ action: "setInterval", intervalMs });
   });
 
-  document.getElementById("theme-toggle").addEventListener("change", async (e) => {
+  themeInput.addEventListener("change", async (e) => {
     const newTheme = e.target.checked ? "light" : "dark";
     await browser.storage.local.set({ theme: newTheme });
     applyTheme(newTheme);
