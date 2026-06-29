@@ -5,6 +5,8 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body { overflow: hidden; }
+
     :root {
       --bg:                 #f5f5f7;
       --fg:                 #1a1a2e;
@@ -100,8 +102,8 @@
     }
 
     .title-bar-icon {
-      font-size: 16px;
-      line-height: 1;
+      width: 16px;
+      height: 16px;
     }
 
     .title-bar-text {
@@ -326,7 +328,7 @@
 </head>
 <body>
   <div class="title-bar">
-    <span class="title-bar-icon">🌐</span>
+    <img class="title-bar-icon" src="icons/icon-32.png" alt="IP Flag" />
     <span class="title-bar-text">IP Flag</span>
   </div>
   <div class="card" id="content">

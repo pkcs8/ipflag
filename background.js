@@ -20,6 +20,11 @@ function renderFlagToImageData(flagEmoji, size = 32) {
   return ctx.getImageData(0, 0, size, size);
 }
 
+function resetIcon() {
+  browser.browserAction.setIcon({ path: { 32: "icons/icon-32.png" } });
+  browser.browserAction.setTitle({ title: "IP Flag" });
+}
+
 async function updateFlag() {
   try {
     const response = await fetch("http://ip-api.com/json/");
@@ -39,7 +44,7 @@ async function updateFlag() {
 
   } catch (err) {
     console.error("IP Flag: failed to fetch IP info", err);
-    browser.browserAction.setTitle({ title: "IP Flag: error fetching location" });
+    resetIcon();
   }
 }
 
@@ -58,8 +63,11 @@ browser.runtime.onInstalled.addListener(async () => {
   scheduleAlarm(refreshInterval);
 });
 
-// On browser startup: fetch immediately (alarm persists across restarts)
-browser.runtime.onStartup.addListener(updateFlag);
+// On browser startup: reset to default icon first, then fetch (imageData doesn't survive restarts)
+browser.runtime.onStartup.addListener(() => {
+  resetIcon();
+  updateFlag();
+});
 
 // Periodic refresh via alarm
 browser.alarms.onAlarm.addListener((alarm) => {
