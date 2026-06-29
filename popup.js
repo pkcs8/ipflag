@@ -23,6 +23,10 @@ function getFlagEmoji(countryCode) {
   return String.fromCodePoint(...codePoints);
 }
 
+function applyTheme(theme) {
+  document.body.classList.toggle("dark", theme === "dark");
+}
+
 async function render() {
   const content = document.getElementById("content");
 
@@ -75,7 +79,8 @@ const INTERVAL_OPTIONS = [
 
 async function renderSettings() {
   const section = document.getElementById("settings-section");
-  const { refreshInterval } = await browser.storage.local.get("refreshInterval");
+  const { refreshInterval, theme } = await browser.storage.local.get(["refreshInterval", "theme"]);
+  const isLight = (theme || "light") === "light";
 
   section.innerHTML = `
     <button class="settings-toggle" id="settings-toggle">
@@ -90,6 +95,13 @@ async function renderSettings() {
             `<option value="${o.value}"${o.value === refreshInterval ? " selected" : ""}>${o.label}</option>`
           ).join("")}
         </select>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Light Mode</span>
+        <label class="theme-switch">
+          <input type="checkbox" id="theme-toggle"${isLight ? " checked" : ""}>
+          <span class="theme-slider"></span>
+        </label>
       </div>
     </div>
   `;
@@ -108,10 +120,22 @@ async function renderSettings() {
     await browser.storage.local.set({ refreshInterval: intervalMs });
     browser.runtime.sendMessage({ action: "setInterval", intervalMs });
   });
+
+  document.getElementById("theme-toggle").addEventListener("change", async (e) => {
+    const newTheme = e.target.checked ? "light" : "dark";
+    await browser.storage.local.set({ theme: newTheme });
+    applyTheme(newTheme);
+  });
 }
 
-render();
-renderSettings();
+async function init() {
+  const { theme } = await browser.storage.local.get("theme");
+  applyTheme(theme || "light");
+  render();
+  renderSettings();
+}
+
+init();
 
 // Re-render if background refreshes while the popup is open
 browser.storage.onChanged.addListener((changes, area) => {
