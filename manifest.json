@@ -22,5 +22,13 @@
   "icons": {
     "32": "icons/icon-32.png",
     "48": "icons/icon-48.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "data_collection_permissions": {
+        "required": [],
+        "optional": []
+      }
+    }
   }
 }
