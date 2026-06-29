@@ -166,13 +166,51 @@
     .settings-select:focus {
       border-color: rgba(192,200,255,0.4);
     }
+
+    .footer-bar {
+      width: 100%;
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.04);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+      font-size: 10px;
+      color: #888;
+      letter-spacing: 0.3px;
+    }
+
+    .title-bar {
+      width: 100%;
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-bar-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .title-bar-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: #c0c8ff;
+      letter-spacing: 0.5px;
+    }
   </style>
 </head>
 <body>
+  <div class="title-bar">
+    <span class="title-bar-icon">🌐</span>
+    <span class="title-bar-text">IP Flag</span>
+  </div>
   <div class="card" id="content">
     <div class="loading">Detecting location…</div>
   </div>
   <div id="settings-section"></div>
+  <div class="footer-bar">Copyright &copy; 2026 XRPSCAN Pte. Ltd.</div>
   <script src="popup.js"></script>
 </body>
 </html>
